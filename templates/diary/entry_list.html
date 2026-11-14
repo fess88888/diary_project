@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Мои записи{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Мои записи</h1>
+    <a href="{% url 'diary:entry-create' %}" class="btn btn-success">+ Новая запись</a>
+</div>
+
+<form method="get" class="mb-4">
+    <div class="input-group">
+        <input type="text" name="q" class="form-control" placeholder="Поиск по заголовку и тексту..."
+               value="{{ request.GET.q }}">
+        <button type="submit" class="btn btn-outline-success">Найти</button>
+        {% if request.GET.q %}
+            <a href="{% url 'diary:entry-list' %}" class="btn btn-outline-secondary">Сбросить</a>
+        {% endif %}
+    </div>
+</form>
+
+{% for entry in page_obj %}
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <h5 class="card-title mb-1">
+                    <a href="{% url 'diary:entry-detail' entry.pk %}" class="text-decoration-none">{{ entry.title }}</a>
+                </h5>
+                <div class="text-nowrap">
+                    <a href="{% url 'diary:entry-update' entry.pk %}" class="btn btn-sm btn-outline-success">Изменить</a>
+                    <a href="{% url 'diary:entry-delete' entry.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+                </div>
+            </div>
+            <p class="card-text text-muted mb-2">{{ entry.content|truncatewords:20 }}</p>
+            <small class="text-muted">{{ entry.created_at|date:"d.m.Y H:i" }}</small>
+        </div>
+    </div>
+{% empty %}
+    <div class="alert alert-info">
+        {% if request.GET.q %}По запросу «{{ request.GET.q }}» ничего не найдено.{% else %}Пока нет ни одной записи. Начните с первой!{% endif %}
+    </div>
+{% endfor %}
+
+{% if is_paginated %}
+    <nav>
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">Назад</a></li>
+            {% endif %}
+            <li class="page-item disabled"><span class="page-link">Стр. {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}">Вперёд</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}
+
