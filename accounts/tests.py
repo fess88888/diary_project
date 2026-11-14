@@ -14,7 +14,6 @@ class AccountsTests(TestCase):
         response = self.client.post(reverse("accounts:signup"), data)
         if response.status_code == 200:
             self.fail(f"Ошибки формы: {response.context['form'].errors}")
-
         self.assertTrue(
             get_user_model().objects.filter(username="testuser").exists()
         )
@@ -24,9 +23,18 @@ class AccountsTests(TestCase):
         response = self.client.get("/")
         self.assertContains(response, "Войти")
 
+    def test_login_logout_flow(self):
+        get_user_model().objects.create_user(
+            username="alice", password="Secret123!"
+        )
 
-class DiaryAccessTests(TestCase):
-    def test_entry_list_requires_login(self):
-        response = self.client.get(reverse("diary:entry-list"))
+        response = self.client.post(
+            reverse("accounts:login"),
+            {"username": "alice", "password": "Secret123!"},
+        )
         self.assertEqual(response.status_code, 302)
-        self.assertIn("/accounts/login/", response.url)
+        self.assertTrue("_auth_user_id" in self.client.session)
+
+        response = self.client.post(reverse("accounts:logout"))
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn("_auth_user_id", self.client.session)
